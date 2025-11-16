@@ -23,7 +23,6 @@ def detect_faces(image: Any) -> List[Any]:
     if isinstance(image, (bytes, bytearray)):
         image = np.array(Image.open(io.BytesIO(image)))
 
-    # Detect face locations using the face_recognition library
     face_locations = face_recognition.face_locations(image)
 
     return face_locations
@@ -36,18 +35,14 @@ def compute_face_embedding(face_image: Any) -> Any:
 
     The embedding should capture discriminative facial features for comparison.
     """
-        # Convert bytes → numpy array if needed
     if isinstance(face_image, (bytes, bytearray)):
         face_image = np.array(Image.open(io.BytesIO(face_image)))
 
-    # Compute face embeddings
     encodings = face_recognition.face_encodings(face_image)
 
     if len(encodings) == 0:
-        # No face found — return None
         return None
 
-    # Return the first face’s embedding (most images contain one face)
     return encodings[0]
     raise NotImplementedError("Student implementation required for face embedding")
 
@@ -63,7 +58,6 @@ def detect_face_keypoints(face_image: Any) -> Any:
     if isinstance(face_image, (bytes, bytearray)):
         face_image = np.array(Image.open(io.BytesIO(face_image)))
 
-    # Detect keypoints for all faces in the image
     keypoints = face_recognition.face_landmarks(face_image)
 
     return keypoints
@@ -75,18 +69,14 @@ def warp_face(image: Any, homography_matrix: Any) -> Any:
 
     Typically used to align faces prior to embedding extraction.
     """
-     # Convert bytes → numpy array if needed
     if isinstance(image, (bytes, bytearray)):
         image = np.array(Image.open(io.BytesIO(image)))
 
-    # Convert PIL image → numpy
     if isinstance(image, Image.Image):
         image = np.array(image)
 
-    # Get image dimensions
     height, width = image.shape[:2]
 
-    # Perform perspective (homography) warp
     warped = cv2.warpPerspective(image, homography_matrix, (width, height))
 
     return warped
@@ -99,28 +89,24 @@ def antispoof_check(face_image: Any) -> float:
 
     A higher score should indicate a higher likelihood that the face is real.
     """
-    # Convert to numpy array if it's not already
+
     if isinstance(face_image, (bytes, bytearray)):
         face_image = np.array(Image.open(io.BytesIO(face_image)))
 
-    # Ensure it's in OpenCV BGR format
     if isinstance(face_image, np.ndarray) and len(face_image.shape) == 3:
         gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
     else:
         gray = face_image
 
-    # --- 1. Sharpness score (Laplacian variance) ---
     sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
-    sharpness_score = min(sharpness / 200.0, 1.0)  # normalize 0–1
+    sharpness_score = min(sharpness / 200.0, 1.0) 
 
-    # --- 2. Color variance (spoofed images are often too uniform) ---
     color_std = np.std(face_image) / 64.0
     color_score = min(color_std, 1.0)
 
-    # --- 3. Combine heuristic scores ---
     score = (0.6 * sharpness_score + 0.4 * color_score)
 
-    # Clamp to [0,1]
+
     score = float(np.clip(score, 0.0, 1.0))
     return score
     raise NotImplementedError("Student implementation required for face anti-spoofing")
@@ -155,11 +141,9 @@ def calculate_face_similarity(image_a: bytes, image_b: bytes) -> float:
     Compute face similarity with a smooth mapping from embedding distance.
     """
 
-    # --- Decode to numpy arrays ---
     img_a = np.array(Image.open(io.BytesIO(image_a)))
     img_b = np.array(Image.open(io.BytesIO(image_b)))
 
-    # --- Get embeddings ---
     enc_a = face_recognition.face_encodings(img_a)
     enc_b = face_recognition.face_encodings(img_b)
 
@@ -169,10 +153,8 @@ def calculate_face_similarity(image_a: bytes, image_b: bytes) -> float:
     emb_a = enc_a[0]
     emb_b = enc_b[0]
 
-    # --- Compute Euclidean distance ---
     distance = np.linalg.norm(emb_a - emb_b)
 
-    # --- Convert distance to similarity using sigmoid ---
     similarity = similarity_from_distance(distance, threshold=0.6, steepness=10)
 
     return similarity
