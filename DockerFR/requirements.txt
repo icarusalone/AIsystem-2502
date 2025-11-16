@@ -2,3 +2,14 @@ fastapi
 pydantic
 uvicorn[standard]
 python-multipart
+numpy
+pillow
+opencv-python
+cmake
+dlib
+face_recognition
+torch
+torchvision
+torchaudio
+fastapi
+uvicorn
